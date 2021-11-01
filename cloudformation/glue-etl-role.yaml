@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Custom resource to allow user to create databrew jobs and access S3 buckets'
+Parameters:
+  S3BucketARN:
+      Type: String
+      Description: Name of S3 bucket with source data and to save transformed training data.  
+Resources:
+  DatabrewRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "databrew.amazonaws.com"
+                - "glue.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AwsGlueDataBrewFullAccessPolicy'
+        - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+  DatabrewS3AccessPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ListObjectsInBucket
+            Effect: Allow
+            Action:
+              - 's3:ListBucket'
+              - 's3:*Object'
+            Resource:
+              - !Ref S3BucketName
+      Roles: 
+        -
+          Ref: DatabrewRole
+    DependsOn: DatabrewRole
